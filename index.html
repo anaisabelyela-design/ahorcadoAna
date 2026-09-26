@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+    font-family:Arial,sans-serif;
+    min-height:100vh;
+    background:linear-gradient(135deg,#dff6ff,#f8fcff);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:15px;
+    color:#1f2937
+}
+.contenedor{
+    width:100%;
+    max-width:900px;
+    background:white;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 8px 30px rgba(0,0,0,.15)
+}
+h1{
+    text-align:center;
+    color:#2563eb;
+    margin-bottom:20px;
+    font-size:clamp(28px,5vw,42px)
+}
+.info{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:20px
+}
+.info div{
+    background:#eff6ff;
+    border-radius:12px;
+    padding:12px;
+    text-align:center;
+    font-weight:bold
+}
+.juego{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:25px;
+    align-items:center
+}
+.ahorcado{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:300px
+}
+svg{
+    width:min(100%,280px);
+    height:auto
+}
+.parte{
+    visibility:hidden;
+    stroke:#1f2937;
+    stroke-width:6;
+    stroke-linecap:round;
+    fill:none
+}
+.palabra{
+    text-align:center;
+    margin:20px 0;
+    font-size:clamp(25px,6vw,40px);
+    letter-spacing:8px;
+    font-weight:bold;
+    word-break:break-word
+}
+.subtitulo{
+    text-align:center;
+    color:#64748b;
+    font-size:clamp(15px,3vw,20px);
+    margin-top:-12px;
+    margin-bottom:20px;
+    font-weight:500;
+}
+.teclado{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:8px
+}
+.teclado button{
+    border:none;
+    border-radius:8px;
+    padding:12px 5px;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    background:#2563eb;
+    color:white;
+    transition:.2s
+}
+.teclado button:hover:not(:disabled){
+    background:#1d4ed8;
+    transform:translateY(-2px)
+}
+.teclado button:disabled{
+    background:#cbd5e1;
+    color:#64748b;
+    cursor:not-allowed
+}
+.mensaje{
+    text-align:center;
+    min-height:30px;
+    margin:18px 0;
+    font-size:18px;
+    font-weight:bold
+}
+.controles{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap
+}
+.controles button{
+    border:none;
+    border-radius:10px;
+    padding:13px 25px;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    background:#16a34a;
+    color:white
+}
+.controles button:hover{
+    background:#15803d
+}
+@media(max-width:700px){
+    body{padding:10px}
+    .contenedor{padding:18px;border-radius:15px}
+    .juego{grid-template-columns:1fr;gap:5px}
+    .ahorcado{min-height:230px}
+    .teclado{grid-template-columns:repeat(6,1fr);gap:6px}
+    .teclado button{padding:10px 3px;font-size:14px}
+    .info{gap:7px}
+    .info div{padding:10px 5px;font-size:14px}
+}
+@media(max-width:400px){
+    .teclado{grid-template-columns:repeat(5,1fr)}
+    .teclado button{padding:9px 2px;font-size:13px}
+    .palabra{letter-spacing:5px}
+}
+</style>
+</head>
+<body>
+<div class="contenedor">
+<h1>🎯 Juego del Ahorcado</h1>
+<p class="subtitulo">Flora del corregimiento de Los Milagros</p>
+
+<div class="info">
+<div>⏱️ Tiempo<br><span id="tiempo">180</span>s</div>
+<div>⭐ Puntaje<br><span id="puntaje">0</span></div>
+<div>❌ Errores<br><span id="errores">0</span>/6</div>
+</div>
+
+<div class="juego">
+<div class="ahorcado">
+<svg viewBox="0 0 300 320">
+<line x1="30" y1="290" x2="250" y2="290" class="parte" style="visibility:visible"/>
+<line x1="80" y1="290" x2="80" y2="40" class="parte" style="visibility:visible"/>
+<line x1="80" y1="40" x2="190" y2="40" class="parte" style="visibility:visible"/>
+<line x1="190" y1="40" x2="190" y2="75" class="parte" style="visibility:visible"/>
+<circle cx="190" cy="105" r="30" class="parte"/>
+<line x1="190" y1="135" x2="190" y2="210" class="parte"/>
+<line x1="190" y1="155" x2="150" y2="185" class="parte"/>
+<line x1="190" y1="155" x2="230" y2="185" class="parte"/>
+<line x1="190" y1="210" x2="155" y2="255" class="parte"/>
+<line x1="190" y1="210" x2="225" y2="255" class="parte"/>
+</svg>
+</div>
+
+<div>
+<div class="palabra" id="palabra"></div>
+<div class="mensaje" id="mensaje"></div>
+<div class="teclado" id="teclado"></div>
+</div>
+</div>
+
+<div class="controles">
+<button onclick="nuevoJuego()">🔄 Nueva palabra</button>
+</div>
+</div>
+
+<script>
+const palabras=[
+"MOTILONES", "ARRAYAN", "COL", "CEBOLLA", "TRIGO", 
+"LULO", "HIERBABUENA", "PAPA", "EUCALIPTO", "MAIZ"
+];
+
+const letras="ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+let palabra="";
+let usadas=[];
+let errores=0;
+let puntaje=0;
+let tiempo=180;
+let intervalo=null;
+let terminado=false;
+
+function nuevoJuego(){
+    palabra=palabras[Math.floor(Math.random()*palabras.length)];
+    usadas=[];
+    errores=0;
+    tiempo=180;
+    terminado=false;
+    document.getElementById("mensaje").textContent="";
+    document.getElementById("tiempo").textContent=tiempo;
+    document.getElementById("errores").textContent=errores;
+    dibujarAhorcado();
+    mostrarPalabra();
+    crearTeclado();
+    clearInterval(intervalo);
+    intervalo=setInterval(actualizarTiempo,1000);
+}
+
+function mostrarPalabra(){
+    const resultado=palabra.split("").map(letra=>
+        usadas.includes(letra)?"_":"_"
+    ).join(" ");
+    
+    const visible=palabra.split("").map(letra=>
+        usadas.includes(letra)?letra:"_"
+    ).join(" ");
+    
+    document.getElementById("palabra").textContent=visible;
+}
+
+function crearTeclado(){
+    const teclado=document.getElementById("teclado");
+    teclado.innerHTML="";
+    
+    letras.forEach(letra=>{
+        const boton=document.createElement("button");
+        boton.textContent=letra;
+        boton.onclick=()=>intentar(letra);
+        teclado.appendChild(boton);
+    });
+}
+
+function intentar(letra){
+    if(terminado||usadas.includes(letra))return;
+    
+    usadas.push(letra);
+    
+    const botones=document.querySelectorAll(".teclado button");
+    botones.forEach(boton=>{
+        if(boton.textContent===letra)boton.disabled=true;
+    });
+    
+    if(palabra.includes(letra)){
+        puntaje+=10;
+        document.getElementById("puntaje").textContent=puntaje;
+        mostrarPalabra();
+        
+        if(palabra.split("").every(letra=>usadas.includes(letra))){
+            terminar(true);
+        }
+    }else{
+        errores++;
+        document.getElementById("errores").textContent=errores;
+        dibujarAhorcado();
+        
+        if(errores>=6){
+            terminar(false);
+        }
+    }
+}
+
+function dibujarAhorcado(){
+    const partes=document.querySelectorAll(".parte");
+    
+    partes.forEach((parte,index)=>{
+        if(index<3){
+            parte.style.visibility="visible";
+        }else{
+            parte.style.visibility=index-3<errores?"visible":"hidden";
+        }
+    });
+}
+
+function terminar(gano){
+    terminado=true;
+    clearInterval(intervalo);
+    
+    const mensaje=document.getElementById("mensaje");
+    
+    if(gano){
+        mensaje.textContent="🎉 ¡Felicitaciones! Encontraste la palabra.";
+        mensaje.style.color="#16a34a";
+    }else{
+        mensaje.textContent="💀 ¡Perdiste! La palabra era: "+palabra;
+        mensaje.style.color="#dc2626";
+        mostrarPalabraCompleta();
+    }
+    
+    document.querySelectorAll(".teclado button").forEach(boton=>{
+        boton.disabled=true;
+    });
+}
+
+function mostrarPalabraCompleta(){
+    document.getElementById("palabra").textContent=palabra.split("").join(" ");
+}
+
+function actualizarTiempo(){
+    if(terminado)return;
+    
+    tiempo--;
+    document.getElementById("tiempo").textContent=tiempo;
+    
+    if(tiempo<=0){
+        terminar(false);
+        document.getElementById("mensaje").textContent="⏰ ¡Se acabó el tiempo! La palabra era: "+palabra;
+    }
+}
+
+nuevoJuego();
+</script>
+</body>
+</html>
